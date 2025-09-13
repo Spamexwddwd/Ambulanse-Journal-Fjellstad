@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Innlogging</title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    background: url('https://cdn.discordapp.com/attachments/1409247263439716512/1416202457830391978/image.png?ex=68c5fcd1&is=68c4ab51&hm=841ec092dfb3bc7aa25cf9c63e81deb69aa38b0ffed409a9a26239bafccdaee0&') no-repeat center center fixed;
+    background-size: cover;
+  }
+
+  .login-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.5s ease;
+    z-index: 2;
+  }
+
+  .logo {
+    position: absolute;
+    top: 140px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: auto;
+  }
+
+  input {
+    position: absolute;
+    background-color: rgba(255,255,255,0.9);
+    border: 1px solid #999;
+    font-size: 16px;
+    padding: 8px;
+    border-radius: 5px;
+    color: black;
+  }
+
+  input:focus {
+    outline: none;
+    border: 2px solid #003366;
+  }
+
+  #message {
+    position: absolute;
+    top: 410px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: red;
+    font-size: 14px;
+  }
+
+  #loginBtn {
+    position: absolute;
+    top: 470px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: rgba(0, 51, 102, 0.8);
+    color: white;
+    border: none;
+    border-radius: 5px;
+  }
+
+  #loginBtn:hover {
+    background-color: rgba(0, 51, 102, 1);
+  }
+
+  /* iframe for hovedsiden */
+  #mainFrame {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: none;
+    opacity: 0;
+    transition: opacity 1s ease;
+    z-index: 1;
+  }
+
+  #mainFrame.visible {
+    opacity: 1;
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+
+<div class="login-container">
+  <!-- Logo -->
+  <img src="https://cdn.discordapp.com/attachments/1409247263439716512/1416203324763406527/image.png?ex=68c5fda0&is=68c4ac20&hm=117372f161c55d0ea740d0791fe95b25c6701bb1ed1afdb15c45f9d09489ca7e&" alt="Logo" class="logo">
+
+  <!-- Innloggingsfelt -->
+  <input type="text" id="username" placeholder="Brukernavn" style="top: 300px; left: 50%; transform: translateX(-50%); width: 220px;">
+  <input type="password" id="password" placeholder="Passord" style="top: 350px; left: 50%; transform: translateX(-50%); width: 220px;">
+  <button id="loginBtn" onclick="login()">Logg inn</button>
+  <div id="message"></div>
+</div>
+
+<!-- Hovedsiden lastes i iframe -->
+<iframe src="AMBULANSEJOURNAL.html" id="mainFrame"></iframe>
+
+<script>
+  // Definer brukere her
+  const users = {
+    "V1be": "v1beerbest",
+    "Spamex": "Spamex123",
+    "Simen": "Helse02",
+  };
+
+  function login() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const msg = document.getElementById('message');
+    const loginContainer = document.querySelector('.login-container');
+    const mainFrame = document.getElementById('mainFrame');
+
+    if(!username || !password) {
+      msg.textContent = "Fyll ut både brukernavn og passord!";
+      return;
+    }
+
+    if(users[username] && users[username] === password) {
+      msg.style.color = 'green';
+      msg.textContent = "Innlogging vellykket!";
+
+      // Fade ut login og fade inn iframe
+      loginContainer.style.opacity = 0;
+      setTimeout(() => {
+        loginContainer.remove(); // 🚑 Fjerner login helt fra DOM
+        mainFrame.classList.add('visible');
+      }, 500);
+    } else {
+      msg.style.color = 'red';
+      msg.textContent = "Feil brukernavn eller passord!";
+    }
+  }
+</script>
+
+</body>
+</html>
