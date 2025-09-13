@@ -1,1 +1,318 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ambulansejournal - Voksen</title>
+<style>
+  body { font-family: Arial, sans-serif; background-color: #f0f0f0; margin: 0; padding: 0; }
+  .header { display: flex; align-items: center; background-color: #003366; color: white; padding: 10px 20px; }
+  .header img { width: 50px; height: 50px; }
+  .header h1 { flex-grow: 1; text-align: center; margin: 0; font-size: 24px; font-weight: bold; }
+  .header .actions { display: flex; gap: 10px; }
+  .header button { background-color: #2563eb; border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+  .header button:hover { background-color: #1d4ed8; }
+
+  .container { width: 95%; max-width: 1200px; margin: 20px auto; background-color: white; border-radius: 8px; padding: 15px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+  .section-title { background-color: #d9f0ff; font-weight: bold; padding: 6px; border: 1px solid #ccc; margin-top: 10px; }
+  .grid { display: grid; gap: 2px; margin-bottom: 5px; }
+  .grid.general { grid-template-columns: repeat(6, 1fr); }
+  .grid.section { grid-template-columns: repeat(6, 1fr); }
+  .grid label { background-color: #e6f0ff; font-weight: bold; text-align: center; padding: 6px; border: 1px solid #ccc; }
+  .grid input, .grid textarea, .grid select { width: 95%; padding: 4px; box-sizing: border-box; border: 1px solid #999; border-radius: 2px; font-size: 14px; text-align: center; }
+  textarea { resize: vertical; }
+
+  button { margin-top: 10px; padding: 12px; width: 100%; background-color: #003366; color: white; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; }
+  button:hover { background-color: #0055a5; }
+  .add-personnel-btn { width: auto; background-color: #2563eb; margin-top: 5px; }
+  .add-personnel-btn:hover { background-color: #1d4ed8; }
+  .remove-btn { background-color: #ef4444; color: white; border-radius: 4px; border: none; cursor: pointer; padding: 4px 8px; font-size: 12px; margin-left: 5px; }
+  .remove-btn:hover { background-color: #b91c1c; }
+
+  /* Loggføringer visning */
+  #logModal, #confirmModal {
+    display: none; position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; background: rgba(0,0,0,0.6);
+    justify-content: center; align-items: center;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  #logContent, #confirmContent {
+    background: white; padding: 20px; border-radius: 8px;
+    width: 90%; max-width: 800px; max-height: 90%;
+    overflow-y: auto;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .log-entry { border-bottom: 1px solid #ccc; padding: 10px 0; }
+  .log-entry button { background-color: #ef4444; padding: 5px 10px; margin-top: 5px; font-size: 12px; }
+
+  .instructions { margin-top: 20px; padding: 15px; background-color: #e6f7ff; border-left: 5px solid #003366; border-radius: 6px; }
+  .instructions h2 { margin-top: 0; font-size: 18px; color: #003366; }
+  .instructions ul { margin: 0; padding-left: 20px; }
+  .instructions li { margin-bottom: 6px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Star_of_life.svg/1200px-Star_of_life.svg.png" alt="Logo">
+  <h1>Ambulansejournal - Voksen</h1>
+  <div class="actions">
+    <button onclick="openLog()">Loggføringer</button>
+    <button onclick="logout()">Logg ut</button>
+  </div>
+</div>
+
+<div class="container">
+<form id="journalForm">
+
+  <!-- Generell info -->
+  <div class="grid general">
+    <label>Dato</label><input type="date" name="dato" required>
+    <label>Pasientnavn</label><input type="text" name="pasient" required>
+    <label>Fødselsdato</label><input type="date" name="fødsel" required>
+    <label>Adresse</label><input type="text" name="adresse" required>
+    <label>Hentested</label><input type="text" name="hentested" required>
+    <label>Leveringssted</label><input type="text" name="leveringssted" required>
+  </div>
+
+  <!-- Ambulansepersonell -->
+  <div class="section-title">Ambulansepersonell på oppdraget</div>
+  <div id="personnelContainer"></div>
+  <button type="button" class="add-personnel-btn" onclick="addPersonnel()">Legg til personell</button>
+
+  <!-- RETTS / FAST / GCS / ESS / Hud / Pupiller -->
+  <div class="section-title">RETTS / FAST / GCS / ESS / Hud / Pupiller</div>
+  <div class="grid section">
+    <label>RETTS</label><input type="text" name="retts" required>
+    <label>FAST</label><input type="text" name="fast" required>
+    <label>GCS</label><input type="text" name="gcs" required>
+    <label>ESS-nummer</label><input type="text" name="ess" required>
+    <label>Hud</label><input type="text" name="hud" required>
+    <label>Pupiller</label><input type="text" name="pupiller" required>
+  </div>
+
+  <!-- Kontaktårsak / Forløp -->
+  <div class="section-title">Kontaktårsak / Forløp</div>
+  <div class="grid section">
+    <label>Kontaktårsak</label><input type="text" name="kontaktarsak" required>
+    <label>Forløp</label><textarea name="forlop" rows="2" required></textarea>
+    <label>SAMPLER</label><textarea name="sampler" rows="2" required></textarea>
+  </div>
+
+  <button type="submit">Send til Discord</button>
+</form>
+
+<div class="instructions">
+  <h2>Instruksjoner for utfylling</h2>
+  <ul>
+    <li><strong>Dato:</strong> Velg dato for hendelsen.</li>
+    <li><strong>Pasientnavn:</strong> Fullt navn (fornavn + etternavn).</li>
+    <li><strong>Fødselsdato:</strong> Velg korrekt fødselsdato.</li>
+    <li><strong>Adresse:</strong> Pasientens nåværende adresse.</li>
+    <li><strong>Hentested:</strong> Hvor pasienten ble hentet.</li>
+    <li><strong>Leveringssted:</strong> Destinasjon (f.eks. sykehus).</li>
+    <li><strong>Ambulansepersonell:</strong> Minst én person må legges til. Alle felter obligatoriske. Fjern personer ved behov.</li>
+    <li><strong>RETTS:</strong> Velg triagenivå (rød/oransje/gul/grønn).</li>
+    <li><strong>FAST:</strong> Resultat av FAST-test.</li>
+    <li><strong>GCS:</strong> Glasgow Coma Scale-poengsum.</li>
+    <li><strong>ESS-nummer:</strong> Eventuell ESS-kode.</li>
+    <li><strong>Hud:</strong> Beskriv hudfarge, temperatur og fuktighet.</li>
+    <li><strong>Pupiller:</strong> Beskriv pupillreaksjon.</li>
+    <li><strong>Kontaktårsak:</strong> Hvorfor ambulanse ble tilkalt.</li>
+    <li><strong>Forløp:</strong> Kort beskrivelse av hendelsesforløpet.</li>
+    <li><strong>SAMPLER:</strong> Symptomer, Allergier, Medisiner, Pasienthistorie, Last meal, Events, Risikofaktorer.</li>
+    <li><strong>Alle felter:</strong> Må fylles ut før sending.</li>
+  </ul>
+</div>
+</div>
+
+<!-- Modal for loggføringer -->
+<div id="logModal">
+  <div id="logContent">
+    <h2>Dine loggføringer</h2>
+    <div id="logEntries"></div>
+    <button onclick="closeLog()">Lukk</button>
+  </div>
+</div>
+
+<!-- Bekreftelsesmodal -->
+<div id="confirmModal">
+  <div id="confirmContent">
+    <h2>Bekreft arkivering</h2>
+    <p>Er du sikker på at du vil arkivere denne journalen?</p>
+    <button id="confirmYes">Ja, arkiver</button>
+    <button onclick="closeConfirm()">Avbryt</button>
+  </div>
+</div>
+
+<script>
+let personnelCount = 0;
+let archiveIndex = null;
+
+function addPersonnel() {
+  const container = document.getElementById('personnelContainer');
+  const rowDiv = document.createElement('div');
+  rowDiv.className = 'grid section';
+  rowDiv.style.gridTemplateColumns = 'repeat(6, 1fr)';
+
+  const fields = [
+    {label: 'Navn', name: `personell_navn${personnelCount}`},
+    {label: 'Rolle/Funksjon', name: `personell_rolle${personnelCount}`},
+    {label: 'Kallesignal', name: `personell_id${personnelCount}`}
+  ];
+
+  fields.forEach(f => {
+    const labelEl = document.createElement('label');
+    labelEl.textContent = f.label;
+    const inputEl = document.createElement('input');
+    inputEl.type = 'text';
+    inputEl.name = f.name;
+    inputEl.required = true;
+    inputEl.dataset.label = f.label;
+    rowDiv.appendChild(labelEl);
+    rowDiv.appendChild(inputEl);
+  });
+
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.className = 'remove-btn';
+  removeBtn.textContent = 'Fjern';
+  removeBtn.onclick = () => {
+    if (personnelCount > 1) {
+      rowDiv.remove();
+      personnelCount--;
+    } else {
+      alert("Det må være minst 1 ambulansepersonell!");
+    }
+  };
+  rowDiv.appendChild(removeBtn);
+
+  container.appendChild(rowDiv);
+  personnelCount++;
+}
+
+// Discord webhook
+const webhookUrl = "https://discord.com/api/webhooks/1416192523147411476/f9YQNH_iK8WeKqdvFltWYKY6mOPWnWttw-4nsi6cy7ElQXiRTYdKiXG-vON551VsWrBK";
+
+// Lagre i localStorage
+function saveLog(entry) {
+  const logs = JSON.parse(localStorage.getItem("journallogs") || "[]");
+  logs.push(entry);
+  localStorage.setItem("journallogs", JSON.stringify(logs));
+}
+
+document.getElementById("journalForm").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  if(personnelCount < 1) {
+    alert("Du må legge til minst én ambulansepersonell!");
+    return;
+  }
+
+  const inputs = e.target.querySelectorAll("input, textarea, select");
+  for (const input of inputs) {
+    if (input.type === "hidden") continue;
+    if (!input.value) {
+      const feltNavn = input.dataset.label || input.previousElementSibling?.textContent || input.name;
+      alert(`Feltet "${feltNavn}" må fylles ut før sending!`);
+      return;
+    }
+  }
+
+  const formData = new FormData(e.target);
+  const journal = {};
+  for (const [key, value] of formData.entries()) {
+    journal[key] = value;
+  }
+
+  // Lagre i localStorage
+  saveLog(journal);
+
+  // Send til Discord
+  const embed = {
+    title: "Ny ambulansejournal",
+    color: 3447003,
+    fields: Object.entries(journal).map(([k,v]) => ({ name: k, value: v, inline: true })),
+    timestamp: new Date()
+  };
+
+  await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ embeds: [embed] })
+  });
+
+  alert("Journal sendt til Discord!");
+  e.target.reset();
+  personnelCount = 0;
+  document.getElementById('personnelContainer').innerHTML = '';
+  addPersonnel();
+});
+
+// Logg modal
+function openLog() {
+  const logs = JSON.parse(localStorage.getItem("journallogs") || "[]");
+  const container = document.getElementById("logEntries");
+  container.innerHTML = "";
+
+  if (logs.length === 0) {
+    container.innerHTML = "<p>Ingen loggføringer funnet.</p>";
+  } else {
+    logs.forEach((entry, index) => {
+      const div = document.createElement("div");
+      div.className = "log-entry";
+      let details = "";
+      for (const [k,v] of Object.entries(entry)) {
+        details += `<strong>${k}:</strong> ${v}<br>`;
+      }
+      div.innerHTML = `
+        <div>${details}</div>
+        <button onclick="confirmArchive(${index})">Arkiver</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  document.getElementById("logModal").style.display = "flex";
+}
+
+function closeLog() {
+  document.getElementById("logModal").style.display = "none";
+}
+
+// Bekreftelsesdialog
+function confirmArchive(index) {
+  archiveIndex = index;
+  document.getElementById("confirmModal").style.display = "flex";
+}
+
+function closeConfirm() {
+  archiveIndex = null;
+  document.getElementById("confirmModal").style.display = "none";
+}
+
+document.getElementById("confirmYes").addEventListener("click", () => {
+  if (archiveIndex !== null) {
+    const logs = JSON.parse(localStorage.getItem("journallogs") || "[]");
+    logs.splice(archiveIndex, 1);
+    localStorage.setItem("journallogs", JSON.stringify(logs));
+    closeConfirm();
+    openLog();
+  }
+});
+
+// Logg ut
+function logout() {
+  window.location.href = "INNLOGGING.html";
+}
+
+addPersonnel();
+</script>
+</body>
+</html>
 
